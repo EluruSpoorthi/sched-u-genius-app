@@ -6,18 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, BookOpen, MessageCircle, Target, Plus, Clock } from "lucide-react";
+import { Calendar, BookOpen, MessageCircle, Target, Plus, Clock, LogOut, User } from "lucide-react";
 import { StudyTracker } from "@/components/StudyTracker";
 import { TimetableGenerator } from "@/components/TimetableGenerator";
 import { ChatInterface } from "@/components/ChatInterface";
 import { SubjectManager } from "@/components/SubjectManager";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user, signOut } = useAuth();
   const [subjects, setSubjects] = useState([
     { id: 1, name: "Mathematics", progress: 65, deadline: "2024-07-15", priority: "high" },
     { id: 2, name: "Physics", progress: 45, deadline: "2024-07-20", priority: "medium" },
     { id: 3, name: "Chemistry", progress: 80, deadline: "2024-07-10", priority: "high" },
   ]);
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
@@ -35,13 +41,32 @@ const Index = () => {
       ></div>
       
       <div className="relative z-10 container mx-auto p-6">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-            AI Study Planner
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Your intelligent companion for academic success
-          </p>
+        {/* Header with user info and logout */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              AI Study Planner
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Your intelligent companion for academic success
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-gray-700">
+              <User className="w-4 h-4" />
+              <span className="text-sm">{user?.email}</span>
+            </div>
+            <Button 
+              onClick={handleSignOut}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
