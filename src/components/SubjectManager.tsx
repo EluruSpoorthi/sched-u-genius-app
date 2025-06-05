@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Plus, BookOpen, Calendar, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Subject {
-  id: number;
+  id: string;
   name: string;
   progress: number;
   deadline: string;
@@ -28,9 +30,11 @@ export const SubjectManager = ({ subjects, setSubjects }: SubjectManagerProps) =
     deadline: "",
     priority: "medium"
   });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const addSubject = () => {
+  const addSubject = async () => {
     if (!newSubject.name || !newSubject.deadline) {
       toast({
         title: "Error",
@@ -40,21 +44,68 @@ export const SubjectManager = ({ subjects, setSubjects }: SubjectManagerProps) =
       return;
     }
 
-    const subject: Subject = {
-      id: Date.now(),
-      name: newSubject.name,
-      progress: 0,
-      deadline: newSubject.deadline,
-      priority: newSubject.priority
-    };
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add subjects",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    setSubjects([...subjects, subject]);
-    setNewSubject({ name: "", deadline: "", priority: "medium" });
-    
-    toast({
-      title: "Success",
-      description: "Subject added successfully!",
-    });
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('subjects')
+        .insert([
+          {
+            name: newSubject.name,
+            deadline: newSubject.deadline,
+            priority: newSubject.priority,
+            user_id: user.id,
+            progress: 0
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding subject:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add subject. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Add the new subject to the local state
+      const newSubjectData: Subject = {
+        id: data.id,
+        name: data.name,
+        progress: data.progress,
+        deadline: data.deadline,
+        priority: data.priority
+      };
+
+      setSubjects([...subjects, newSubjectData]);
+      setNewSubject({ name: "", deadline: "", priority: "medium" });
+      
+      toast({
+        title: "Success",
+        description: "Subject added successfully!",
+      });
+    } catch (error) {
+      console.error('Error adding subject:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add subject. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -93,6 +144,7 @@ export const SubjectManager = ({ subjects, setSubjects }: SubjectManagerProps) =
               onChange={(e) => setNewSubject({...newSubject, name: e.target.value})}
               placeholder="Enter subject name"
               className="bg-white"
+              disabled={isLoading}
             />
           </div>
           
@@ -104,12 +156,17 @@ export const SubjectManager = ({ subjects, setSubjects }: SubjectManagerProps) =
               value={newSubject.deadline}
               onChange={(e) => setNewSubject({...newSubject, deadline: e.target.value})}
               className="bg-white"
+              disabled={isLoading}
             />
           </div>
           
           <div>
             <Label htmlFor="priority">Priority</Label>
-            <Select value={newSubject.priority} onValueChange={(value) => setNewSubject({...newSubject, priority: value})}>
+            <Select 
+              value={newSubject.priority} 
+              onValueChange={(value) => setNewSubject({...newSubject, priority: value})}
+              disabled={isLoading}
+            >
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
@@ -121,9 +178,13 @@ export const SubjectManager = ({ subjects, setSubjects }: SubjectManagerProps) =
             </Select>
           </div>
           
-          <Button onClick={addSubject} className="w-full bg-indigo-600 hover:bg-indigo-700">
+          <Button 
+            onClick={addSubject} 
+            className="w-full bg-indigo-600 hover:bg-indigo-700"
+            disabled={isLoading}
+          >
             <Plus className="w-4 h-4 mr-2" />
-            Add Subject
+            {isLoading ? "Adding..." : "Add Subject"}
           </Button>
         </div>
 

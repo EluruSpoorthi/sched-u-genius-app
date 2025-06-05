@@ -1,29 +1,33 @@
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Calendar, BookOpen, MessageCircle, Target, Plus, Clock, LogOut, User } from "lucide-react";
+import { Calendar, BookOpen, MessageCircle, Target, Clock, LogOut, User } from "lucide-react";
 import { StudyTracker } from "@/components/StudyTracker";
 import { TimetableGenerator } from "@/components/TimetableGenerator";
 import { ChatInterface } from "@/components/ChatInterface";
 import { SubjectManager } from "@/components/SubjectManager";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubjects } from "@/hooks/useSubjects";
 
 const Index = () => {
   const { user, signOut } = useAuth();
-  const [subjects, setSubjects] = useState([
-    { id: 1, name: "Mathematics", progress: 65, deadline: "2024-07-15", priority: "high" },
-    { id: 2, name: "Physics", progress: 45, deadline: "2024-07-20", priority: "medium" },
-    { id: 3, name: "Chemistry", progress: 80, deadline: "2024-07-10", priority: "high" },
-  ]);
+  const { subjects, setSubjects, loading } = useSubjects();
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your subjects...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
@@ -110,7 +114,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
-                    {Math.round(subjects.reduce((acc, s) => acc + s.progress, 0) / subjects.length)}%
+                    {subjects.length > 0 ? Math.round(subjects.reduce((acc, s) => acc + s.progress, 0) / subjects.length) : 0}%
                   </div>
                 </CardContent>
               </Card>
