@@ -8,7 +8,7 @@ import { Calendar, Clock, Zap, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Subject {
-  id: number;
+  id: string;
   name: string;
   progress: number;
   deadline: string;

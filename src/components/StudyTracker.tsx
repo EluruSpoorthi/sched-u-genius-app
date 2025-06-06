@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TrendingUp, Clock, Target, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Subject {
-  id: number;
+  id: string;
   name: string;
   progress: number;
   deadline: string;
@@ -28,8 +30,9 @@ export const StudyTracker = ({ subjects, setSubjects }: StudyTrackerProps) => {
     progress: ""
   });
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const logStudySession = () => {
+  const logStudySession = async () => {
     if (!studySession.subjectId || !studySession.duration || !studySession.progress) {
       toast({
         title: "Error",
@@ -39,21 +42,59 @@ export const StudyTracker = ({ subjects, setSubjects }: StudyTrackerProps) => {
       return;
     }
 
-    const updatedSubjects = subjects.map(subject => {
-      if (subject.id === parseInt(studySession.subjectId)) {
-        const newProgress = Math.min(100, subject.progress + parseInt(studySession.progress));
-        return { ...subject, progress: newProgress };
-      }
-      return subject;
-    });
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to log study sessions",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    setSubjects(updatedSubjects);
-    setStudySession({ subjectId: "", duration: "", progress: "" });
-    
-    toast({
-      title: "Study Session Logged!",
-      description: `Great job! You studied for ${studySession.duration} minutes.`,
-    });
+    try {
+      const selectedSubject = subjects.find(s => s.id === studySession.subjectId);
+      if (!selectedSubject) return;
+
+      const newProgress = Math.min(100, selectedSubject.progress + parseInt(studySession.progress));
+
+      const { error } = await supabase
+        .from('subjects')
+        .update({ progress: newProgress })
+        .eq('id', studySession.subjectId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating progress:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update progress",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const updatedSubjects = subjects.map(subject => {
+        if (subject.id === studySession.subjectId) {
+          return { ...subject, progress: newProgress };
+        }
+        return subject;
+      });
+
+      setSubjects(updatedSubjects);
+      setStudySession({ subjectId: "", duration: "", progress: "" });
+      
+      toast({
+        title: "Study Session Logged!",
+        description: `Great job! You studied for ${studySession.duration} minutes.`,
+      });
+    } catch (error) {
+      console.error('Error logging study session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log study session",
+        variant: "destructive"
+      });
+    }
   };
 
   const getDaysUntilDeadline = (deadline: string) => {
