@@ -68,13 +68,14 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Neon colors
+				// Enhanced Neon colors
 				neon: {
+					cyan: 'hsl(var(--neon-cyan))',
+					magenta: 'hsl(var(--neon-magenta))',
 					green: 'hsl(var(--neon-green))',
-					pink: 'hsl(var(--neon-pink))',
 					blue: 'hsl(var(--neon-blue))',
-					purple: 'hsl(var(--neon-purple))',
 					yellow: 'hsl(var(--neon-yellow))',
+					purple: 'hsl(var(--neon-purple))',
 				}
 			},
 			borderRadius: {
@@ -107,16 +108,22 @@ export default {
 						boxShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor'
 					}
 				},
-				'matrix-rain': {
-					'0%': { transform: 'translateY(-100%)' },
-					'100%': { transform: 'translateY(100vh)' }
+				'fade-in': {
+					'0%': { 
+						opacity: '0', 
+						transform: 'translateY(10px)' 
+					},
+					'100%': { 
+						opacity: '1', 
+						transform: 'translateY(0)' 
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'glow': 'glow 2s ease-in-out infinite alternate',
-				'matrix-rain': 'matrix-rain 10s linear infinite'
+				'fade-in': 'fade-in 0.5s ease-out'
 			}
 		}
 	},
