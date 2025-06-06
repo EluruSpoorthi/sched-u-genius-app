@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, Bot, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: number;
@@ -27,9 +28,20 @@ export const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now(),
@@ -42,31 +54,49 @@ export const ChatInterface = () => {
     setInputMessage("");
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual OpenAI API call when Supabase is connected)
-    setTimeout(() => {
-      const aiResponses = [
-        "That's a great question! Here are some effective study techniques that can help you improve your learning...",
-        "Based on your study pattern, I recommend focusing on active recall and spaced repetition for better retention.",
-        "For better time management, try the Pomodoro Technique: 25 minutes of focused study followed by a 5-minute break.",
-        "To improve your understanding of this topic, I suggest breaking it down into smaller concepts and practicing with examples.",
-        "Creating mind maps and summary notes can be very effective for visual learners like yourself."
-      ];
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-with-ai', {
+        body: { message: inputMessage }
+      });
+
+      if (error) {
+        console.error('Error calling chat function:', error);
+        throw new Error(error.message || 'Failed to get AI response');
+      }
 
       const aiMessage: Message = {
         id: Date.now() + 1,
-        content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+        content: data.response,
         sender: 'ai',
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
-    }, 1500);
+      
+      toast({
+        title: "AI Response Received",
+        description: "Your AI tutor has responded!",
+      });
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        content: "I apologize, but I'm having trouble connecting right now. Please try again in a moment. In the meantime, I'm here to help with any study questions you might have!",
+        sender: 'ai',
+        timestamp: new Date()
+      };
 
-    toast({
-      title: "Message sent",
-      description: "AI is processing your request...",
-    });
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "Connection Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -81,15 +111,15 @@ export const ChatInterface = () => {
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-indigo-600" />
-          AI Study Assistant
+          AI Study Tutor
         </CardTitle>
         <p className="text-sm text-gray-600">
-          Ask questions about your studies, get personalized tips, and receive academic guidance.
+          Your personal AI tutor powered by GPT-4. Ask questions, get study tips, and receive academic guidance.
         </p>
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {messages.map((message) => (
               <div
@@ -161,7 +191,7 @@ export const ChatInterface = () => {
             </Button>
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Note: Connect to Supabase to enable full AI capabilities with OpenAI GPT-4
+            Powered by OpenAI GPT-4 • Press Enter to send
           </p>
         </div>
       </CardContent>
