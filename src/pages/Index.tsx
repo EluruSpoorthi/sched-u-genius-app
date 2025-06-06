@@ -7,6 +7,8 @@ import { StudyTracker } from "@/components/StudyTracker";
 import { TimetableGenerator } from "@/components/TimetableGenerator";
 import { ChatInterface } from "@/components/ChatInterface";
 import { SubjectManager } from "@/components/SubjectManager";
+import { MusicPlayer } from "@/components/MusicPlayer";
+import { StudyTimer } from "@/components/StudyTimer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubjects } from "@/hooks/useSubjects";
 
@@ -146,37 +148,41 @@ const Index = () => {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="lg:col-span-2 space-y-6">
                 <SubjectManager subjects={subjects} setSubjects={setSubjects} />
               </div>
               
-              <Card className="terminal-bg glow-cyan scanlines hover-glow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 neon-cyan font-mono text-xl">
-                    <Zap className="w-6 h-6" />
-                    SYSTEM_ACTIVITY_LOG
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 font-mono">
-                  <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
-                    <span className="neon-green">[SUCCESS] Chemistry module completed</span>
-                    <span className="neon-blue text-sm">2h ago</span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
-                    <span className="neon-magenta">[ALERT] Mathematics quiz scheduled</span>
-                    <span className="neon-blue text-sm">5h ago</span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
-                    <span className="neon-purple">[INFO] Physics session initiated</span>
-                    <span className="neon-blue text-sm">1d ago</span>
-                  </div>
-                  <div className="flex items-center justify-between py-3">
-                    <span className="neon-cyan">[LOG] System optimization complete</span>
-                    <span className="neon-blue text-sm">2d ago</span>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <StudyTimer subjects={subjects} />
+                
+                <Card className="terminal-bg glow-cyan scanlines hover-glow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3 neon-cyan font-mono text-xl">
+                      <Zap className="w-6 h-6" />
+                      SYSTEM_ACTIVITY_LOG
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6 font-mono">
+                    <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
+                      <span className="neon-green">[SUCCESS] Chemistry module completed</span>
+                      <span className="neon-blue text-sm">2h ago</span>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
+                      <span className="neon-magenta">[ALERT] Mathematics quiz scheduled</span>
+                      <span className="neon-blue text-sm">5h ago</span>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
+                      <span className="neon-purple">[INFO] Physics session initiated</span>
+                      <span className="neon-blue text-sm">1d ago</span>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                      <span className="neon-cyan">[LOG] System optimization complete</span>
+                      <span className="neon-blue text-sm">2d ago</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
@@ -193,6 +199,9 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Fixed Music Player */}
+      <MusicPlayer />
     </div>
   );
 };

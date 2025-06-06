@@ -3,51 +3,46 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, Bot, User } from "lucide-react";
+import { MessageCircle, Send, Bot, User, Brain, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
-  id: number;
-  content: string;
-  sender: 'user' | 'ai';
+  id: string;
+  text: string;
+  isUser: boolean;
   timestamp: Date;
 }
 
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 1,
-      content: "Hello! I'm your AI study assistant. I can help you with study tips, explain concepts, create study plans, and answer academic questions. How can I assist you today?",
-      sender: 'ai',
-      timestamp: new Date()
-    }
+      id: "1",
+      text: "[SYSTEM_INIT] Neural AI Tutor activated. Ready to assist with your academic optimization protocols.",
+      isUser: false,
+      timestamp: new Date(),
+    },
   ]);
-  
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages are added
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
+    scrollToBottom();
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim()) return;
 
     const userMessage: Message = {
-      id: Date.now(),
-      content: inputMessage,
-      sender: 'user',
-      timestamp: new Date()
+      id: Date.now().toString(),
+      text: inputMessage,
+      isUser: true,
+      timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -55,44 +50,45 @@ export const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-with-ai', {
-        body: { message: inputMessage }
+      const response = await fetch('/api/chat-with-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage,
+          context: "You are an AI tutor specialized in helping students with their studies. Provide helpful, encouraging, and educational responses."
+        }),
       });
 
-      if (error) {
-        console.error('Error calling chat function:', error);
-        throw new Error(error.message || 'Failed to get AI response');
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
       }
 
+      const data = await response.json();
+      
       const aiMessage: Message = {
-        id: Date.now() + 1,
-        content: data.response,
-        sender: 'ai',
-        timestamp: new Date()
+        id: (Date.now() + 1).toString(),
+        text: data.response || "[ERROR] Neural pathways temporarily disrupted. Please retry transmission.",
+        isUser: false,
+        timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, aiMessage]);
-      
-      toast({
-        title: "AI Response Received",
-        description: "Your AI tutor has responded!",
-      });
     } catch (error) {
-      console.error('Error getting AI response:', error);
-      
+      console.error('Error sending message:', error);
       const errorMessage: Message = {
-        id: Date.now() + 1,
-        content: "I apologize, but I'm having trouble connecting right now. Please try again in a moment. In the meantime, I'm here to help with any study questions you might have!",
-        sender: 'ai',
-        timestamp: new Date()
+        id: (Date.now() + 1).toString(),
+        text: "[ERROR] Connection to neural network failed. Attempting to re-establish link...",
+        isUser: false,
+        timestamp: new Date(),
       };
-
       setMessages(prev => [...prev, errorMessage]);
       
       toast({
-        title: "Connection Error",
-        description: "Failed to get AI response. Please try again.",
-        variant: "destructive"
+        title: "ERROR: AI_CONNECTION_FAILED",
+        description: "Unable to reach neural network. Check system status.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -107,94 +103,108 @@ export const ChatInterface = () => {
   };
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg h-[600px] flex flex-col">
-      <CardHeader className="flex-shrink-0">
-        <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-indigo-600" />
-          AI Study Tutor
-        </CardTitle>
-        <p className="text-sm text-gray-600">
-          Your personal AI tutor powered by GPT-4. Ask questions, get study tips, and receive academic guidance.
+    <div className="h-full terminal-bg cyber-grid p-6 space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <h2 className="text-4xl font-bold neon-green font-mono flex items-center justify-center gap-3">
+          <Brain className="w-10 h-10" />
+          AI_NEURAL_TUTOR
+        </h2>
+        <p className="text-neon-cyan font-mono text-lg">
+          &gt; Advanced artificial intelligence study companion
         </p>
-      </CardHeader>
-      
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-          <div className="space-y-4">
+      </div>
+
+      <Card className="h-[600px] flex flex-col terminal-bg glow-green scanlines">
+        <CardHeader className="border-b border-neon-green/30">
+          <CardTitle className="flex items-center gap-3 neon-green font-mono text-xl">
+            <Zap className="w-6 h-6" />
+            NEURAL_CHAT_INTERFACE
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="flex-1 flex flex-col p-0">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex items-start gap-3 ${
-                  message.sender === 'user' ? 'justify-end' : 'justify-start'
+                  message.isUser ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
-                <div className={`flex items-start gap-3 max-w-[80%] ${
-                  message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'
+                <div className={`p-2 rounded-lg border ${
+                  message.isUser 
+                    ? 'bg-neon-cyan/10 border-neon-cyan/30' 
+                    : 'bg-neon-green/10 border-neon-green/30'
                 }`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.sender === 'user' 
-                      ? 'bg-indigo-600 text-white' 
-                      : 'bg-gray-200 text-gray-600'
+                  {message.isUser ? (
+                    <User className="w-5 h-5 neon-cyan" />
+                  ) : (
+                    <Bot className="w-5 h-5 neon-green" />
+                  )}
+                </div>
+                
+                <div className={`max-w-[80%] p-4 rounded-lg border font-mono ${
+                  message.isUser
+                    ? 'terminal-bg border-neon-cyan/30 neon-cyan text-right'
+                    : 'terminal-bg border-neon-green/30 neon-green'
+                }`}>
+                  <p className="text-sm leading-relaxed">{message.text}</p>
+                  <p className={`text-xs mt-2 opacity-60 ${
+                    message.isUser ? 'neon-cyan' : 'neon-green'
                   }`}>
-                    {message.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </div>
-                  
-                  <div className={`p-3 rounded-lg ${
-                    message.sender === 'user'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className={`text-xs mt-1 ${
-                      message.sender === 'user' ? 'text-indigo-200' : 'text-gray-500'
-                    }`}>
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
-                  </div>
+                    {message.timestamp.toLocaleTimeString()}
+                  </p>
                 </div>
               </div>
             ))}
             
             {isLoading && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
-                  <Bot className="w-4 h-4" />
+                <div className="p-2 rounded-lg border bg-neon-green/10 border-neon-green/30">
+                  <Bot className="w-5 h-5 neon-green" />
                 </div>
-                <div className="bg-gray-100 text-gray-900 p-3 rounded-lg">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <div className="max-w-[80%] p-4 rounded-lg border terminal-bg border-neon-green/30">
+                  <div className="flex items-center gap-2 neon-green font-mono">
+                    <div className="animate-pulse">●</div>
+                    <div className="animate-pulse animation-delay-200">●</div>
+                    <div className="animate-pulse animation-delay-400">●</div>
+                    <span className="text-sm">Neural processing...</span>
                   </div>
                 </div>
               </div>
             )}
+            
+            <div ref={messagesEndRef} />
           </div>
-        </ScrollArea>
-        
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex gap-2">
-            <Input
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask me anything about your studies..."
-              className="flex-1 bg-white"
-              disabled={isLoading}
-            />
-            <Button 
-              onClick={sendMessage} 
-              disabled={isLoading || !inputMessage.trim()}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
+
+          {/* Input */}
+          <div className="border-t border-neon-green/30 p-6">
+            <div className="flex gap-3">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="[INPUT] Enter your query..."
+                className="flex-1 terminal-bg border-neon-cyan/50 neon-cyan font-mono glow-cyan focus:glow-cyan"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={isLoading || !inputMessage.trim()}
+                className="glow-green hover:glow-green font-mono border-neon-green text-neon-green hover:bg-neon-green hover:text-background transition-all hover-glow hover-glow-green"
+                variant="outline"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs neon-cyan/60 font-mono mt-2">
+              [TIP] Press Enter to transmit • Shift+Enter for new line
+            </p>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Powered by OpenAI GPT-4 • Press Enter to send
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

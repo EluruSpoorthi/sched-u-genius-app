@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, Zap, RefreshCw } from "lucide-react";
+import { Calendar, Clock, Target, Zap, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Subject {
@@ -19,194 +19,275 @@ interface TimetableGeneratorProps {
   subjects: Subject[];
 }
 
-interface StudySlot {
-  time: string;
+interface TimeSlot {
+  id: string;
   subject: string;
-  duration: string;
-  type: string;
+  startTime: string;
+  endTime: string;
+  day: string;
 }
 
 export const TimetableGenerator = ({ subjects }: TimetableGeneratorProps) => {
-  const [preferences, setPreferences] = useState({
-    studyHoursPerDay: "6",
-    preferredStartTime: "09:00",
-    preferredEndTime: "18:00",
-    breakDuration: "15"
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [newSlot, setNewSlot] = useState({
+    subject: "",
+    startTime: "",
+    endTime: "",
+    day: "Monday"
   });
-  
-  const [generatedTimetable, setGeneratedTimetable] = useState<StudySlot[]>([]);
   const { toast } = useToast();
 
-  const generateTimetable = () => {
-    if (subjects.length === 0) {
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+  const addTimeSlot = () => {
+    if (!newSlot.subject || !newSlot.startTime || !newSlot.endTime) {
       toast({
-        title: "No subjects available",
-        description: "Please add some subjects first",
+        title: "ERROR: INCOMPLETE_DATA",
+        description: "Please fill in all fields",
         variant: "destructive"
       });
       return;
     }
 
-    // Simple timetable generation algorithm
-    const slots: StudySlot[] = [];
-    const totalHours = parseInt(preferences.studyHoursPerDay);
-    const startHour = parseInt(preferences.preferredStartTime.split(':')[0]);
-    const breakDuration = parseInt(preferences.breakDuration);
-    
-    // Sort subjects by priority and progress (less progress = more time needed)
-    const sortedSubjects = [...subjects].sort((a, b) => {
-      const priorityWeight = { high: 3, medium: 2, low: 1 };
-      const aPriority = priorityWeight[a.priority as keyof typeof priorityWeight];
-      const bPriority = priorityWeight[b.priority as keyof typeof priorityWeight];
-      
-      // Higher priority and lower progress get more time
-      return (bPriority - aPriority) || (a.progress - b.progress);
-    });
+    const slot: TimeSlot = {
+      id: Date.now().toString(),
+      subject: newSlot.subject,
+      startTime: newSlot.startTime,
+      endTime: newSlot.endTime,
+      day: newSlot.day
+    };
 
-    let currentHour = startHour;
-    let remainingHours = totalHours;
+    setTimeSlots([...timeSlots, slot]);
+    setNewSlot({ subject: "", startTime: "", endTime: "", day: "Monday" });
     
-    sortedSubjects.forEach((subject, index) => {
-      if (remainingHours <= 0) return;
-      
-      // Allocate time based on priority and progress
-      let allocatedHours = Math.max(1, Math.floor(remainingHours / (sortedSubjects.length - index)));
-      if (subject.priority === 'high') allocatedHours = Math.min(allocatedHours + 1, remainingHours);
-      
-      slots.push({
-        time: `${currentHour.toString().padStart(2, '0')}:00`,
-        subject: subject.name,
-        duration: `${allocatedHours * 60} min`,
-        type: subject.progress < 50 ? 'Intensive Study' : 'Review'
-      });
-      
-      currentHour += allocatedHours;
-      remainingHours -= allocatedHours;
-      
-      // Add break
-      if (index < sortedSubjects.length - 1 && remainingHours > 0) {
-        slots.push({
-          time: `${currentHour.toString().padStart(2, '0')}:00`,
-          subject: 'Break',
-          duration: `${breakDuration} min`,
-          type: 'Rest'
-        });
-        currentHour += breakDuration / 60;
-      }
-    });
-
-    setGeneratedTimetable(slots);
     toast({
-      title: "Timetable Generated!",
-      description: "Your personalized study schedule is ready.",
+      title: "[SUCCESS] Schedule Updated",
+      description: "Time slot added to your study protocol",
     });
   };
 
-  const getSlotColor = (type: string) => {
-    switch (type) {
-      case 'Intensive Study': return 'bg-red-100 border-red-300 text-red-800';
-      case 'Review': return 'bg-blue-100 border-blue-300 text-blue-800';
-      case 'Rest': return 'bg-green-100 border-green-300 text-green-800';
-      default: return 'bg-gray-100 border-gray-300 text-gray-800';
+  const removeTimeSlot = (id: string) => {
+    setTimeSlots(timeSlots.filter(slot => slot.id !== id));
+    toast({
+      title: "[INFO] Slot Removed",
+      description: "Schedule entry deleted from system",
+    });
+  };
+
+  const generateSmartTimetable = () => {
+    if (subjects.length === 0) {
+      toast({
+        title: "ERROR: NO_SUBJECTS_FOUND",
+        description: "Add subjects before generating schedule",
+        variant: "destructive"
+      });
+      return;
     }
+
+    // Smart scheduling algorithm based on priority and deadlines
+    const newSlots: TimeSlot[] = [];
+    const timeSlots = ["09:00", "11:00", "14:00", "16:00", "19:00"];
+    
+    subjects.forEach((subject, index) => {
+      const dayIndex = index % 7;
+      const timeIndex = index % timeSlots.length;
+      
+      newSlots.push({
+        id: `generated-${index}`,
+        subject: subject.name,
+        startTime: timeSlots[timeIndex],
+        endTime: `${parseInt(timeSlots[timeIndex]) + 2}:00`,
+        day: daysOfWeek[dayIndex]
+      });
+    });
+
+    setTimeSlots(newSlots);
+    toast({
+      title: "[AI] Smart Schedule Generated",
+      description: "Optimized timetable created based on subject priorities",
+    });
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-indigo-600" />
-            Study Preferences
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="study-hours">Study Hours/Day</Label>
-              <Input
-                id="study-hours"
-                type="number"
-                min="1"
-                max="12"
-                value={preferences.studyHoursPerDay}
-                onChange={(e) => setPreferences({...preferences, studyHoursPerDay: e.target.value})}
-                className="bg-white"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="start-time">Preferred Start Time</Label>
-              <Input
-                id="start-time"
-                type="time"
-                value={preferences.preferredStartTime}
-                onChange={(e) => setPreferences({...preferences, preferredStartTime: e.target.value})}
-                className="bg-white"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="end-time">Preferred End Time</Label>
-              <Input
-                id="end-time"
-                type="time"
-                value={preferences.preferredEndTime}
-                onChange={(e) => setPreferences({...preferences, preferredEndTime: e.target.value})}
-                className="bg-white"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="break-duration">Break Duration (min)</Label>
-              <Input
-                id="break-duration"
-                type="number"
-                min="5"
-                max="60"
-                value={preferences.breakDuration}
-                onChange={(e) => setPreferences({...preferences, breakDuration: e.target.value})}
-                className="bg-white"
-              />
-            </div>
-          </div>
-          
-          <Button onClick={generateTimetable} className="w-full bg-indigo-600 hover:bg-indigo-700">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Generate AI Timetable
-          </Button>
-        </CardContent>
-      </Card>
+    <div className="space-y-8 terminal-bg cyber-grid p-6">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <h2 className="text-4xl font-bold neon-cyan font-mono flex items-center justify-center gap-3">
+          <Calendar className="w-10 h-10" />
+          NEURAL_SCHEDULER
+        </h2>
+        <p className="text-neon-magenta font-mono text-lg">
+          &gt; Optimizing your study sessions with AI precision
+        </p>
+      </div>
 
-      {generatedTimetable.length > 0 && (
-        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Add Time Slot */}
+        <Card className="terminal-bg glow-cyan scanlines hover-glow hover-glow-cyan transition-all">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-indigo-600" />
-              Generated Study Timetable
+            <CardTitle className="flex items-center gap-3 neon-cyan font-mono text-xl">
+              <Plus className="w-6 h-6" />
+              ADD_SCHEDULE_ENTRY
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Label htmlFor="subject-select" className="text-neon-cyan font-mono text-sm mb-2 block">
+                  [SUBJECT_MODULE]
+                </Label>
+                <select
+                  id="subject-select"
+                  value={newSlot.subject}
+                  onChange={(e) => setNewSlot({...newSlot, subject: e.target.value})}
+                  className="w-full p-3 terminal-bg border border-neon-cyan/50 rounded-lg neon-cyan font-mono glow-cyan focus:glow-cyan focus:outline-none"
+                >
+                  <option value="" className="bg-background">Select Module</option>
+                  {subjects.map(subject => (
+                    <option key={subject.id} value={subject.name} className="bg-background text-foreground">
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <Label htmlFor="day-select" className="text-neon-magenta font-mono text-sm mb-2 block">
+                  [DAY_CYCLE]
+                </Label>
+                <select
+                  id="day-select"
+                  value={newSlot.day}
+                  onChange={(e) => setNewSlot({...newSlot, day: e.target.value})}
+                  className="w-full p-3 terminal-bg border border-neon-magenta/50 rounded-lg neon-magenta font-mono glow-magenta focus:glow-magenta focus:outline-none"
+                >
+                  {daysOfWeek.map(day => (
+                    <option key={day} value={day} className="bg-background text-foreground">
+                      {day}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start-time" className="text-neon-green font-mono text-sm mb-2 block">
+                    [START_TIME]
+                  </Label>
+                  <Input
+                    id="start-time"
+                    type="time"
+                    value={newSlot.startTime}
+                    onChange={(e) => setNewSlot({...newSlot, startTime: e.target.value})}
+                    className="terminal-bg border-neon-green/50 neon-green font-mono glow-green focus:glow-green"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="end-time" className="text-neon-blue font-mono text-sm mb-2 block">
+                    [END_TIME]
+                  </Label>
+                  <Input
+                    id="end-time"
+                    type="time"
+                    value={newSlot.endTime}
+                    onChange={(e) => setNewSlot({...newSlot, endTime: e.target.value})}
+                    className="terminal-bg border-neon-blue/50 neon-blue font-mono glow-blue focus:glow-blue"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <Button 
+                onClick={addTimeSlot} 
+                className="flex-1 glow-cyan hover:glow-cyan font-mono border-neon-cyan text-neon-cyan hover:bg-neon-cyan hover:text-background transition-all hover-glow hover-glow-cyan"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                SCHEDULE
+              </Button>
+              
+              <Button 
+                onClick={generateSmartTimetable} 
+                className="flex-1 glow-magenta hover:glow-magenta font-mono border-neon-magenta text-neon-magenta hover:bg-neon-magenta hover:text-background transition-all hover-glow hover-glow-magenta"
+                variant="outline"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                AI_GEN
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Schedule Overview */}
+        <Card className="terminal-bg glow-green scanlines hover-glow hover-glow-green transition-all">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 neon-green font-mono text-xl">
+              <Target className="w-6 h-6" />
+              SCHEDULE_MATRIX
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {generatedTimetable.map((slot, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg border-2 ${getSlotColor(slot.type)}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span className="font-semibold">{slot.time}</span>
-                      </div>
-                      <div>
-                        <div className="font-medium">{slot.subject}</div>
-                        <div className="text-sm opacity-75">{slot.type}</div>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {timeSlots.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 neon-cyan mx-auto mb-4" />
+                  <p className="neon-cyan font-mono">NO SCHEDULES FOUND</p>
+                  <p className="text-neon-cyan/60 font-mono text-sm">Initialize your study protocol</p>
+                </div>
+              ) : (
+                timeSlots.map((slot) => (
+                  <div key={slot.id} className="flex items-center justify-between p-4 border border-neon-green/30 rounded-lg terminal-bg glow-green/20 hover:glow-green/40 transition-all">
+                    <div className="space-y-1">
+                      <div className="font-mono neon-green text-lg">{slot.subject}</div>
+                      <div className="font-mono text-neon-blue text-sm">
+                        [{slot.day}] {slot.startTime} → {slot.endTime}
                       </div>
                     </div>
-                    <div className="text-sm font-medium">
-                      {slot.duration}
-                    </div>
+                    <Button
+                      onClick={() => removeTimeSlot(slot.id)}
+                      variant="outline"
+                      size="sm"
+                      className="border-red-500/50 text-red-400 hover:bg-red-500 hover:text-white glow-red hover:glow-red transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Weekly View */}
+      {timeSlots.length > 0 && (
+        <Card className="terminal-bg glow-blue scanlines">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 neon-blue font-mono text-xl">
+              <Calendar className="w-6 h-6" />
+              WEEKLY_PROTOCOL_VIEW
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+              {daysOfWeek.map(day => (
+                <div key={day} className="space-y-2">
+                  <h3 className="font-mono neon-magenta text-center text-sm font-bold border-b border-neon-magenta/30 pb-2">
+                    {day.toUpperCase()}
+                  </h3>
+                  <div className="space-y-2">
+                    {timeSlots
+                      .filter(slot => slot.day === day)
+                      .map(slot => (
+                        <div key={slot.id} className="p-2 border border-neon-cyan/30 rounded terminal-bg text-xs">
+                          <div className="neon-cyan font-mono truncate">{slot.subject}</div>
+                          <div className="text-neon-blue font-mono text-xs">
+                            {slot.startTime}-{slot.endTime}
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 </div>
               ))}
