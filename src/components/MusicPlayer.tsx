@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,22 +7,22 @@ import { Play, Pause, SkipForward, SkipBack, Volume2, Music } from "lucide-react
 const lofiTracks = [
   {
     id: 1,
-    title: "Chill Beats Study Session",
-    url: "https://www.soundjay.com/misc/sounds-1030.wav",
-    duration: 180
+    title: "Calm Lofi Vibes",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    duration: 180,
   },
   {
     id: 2,
-    title: "Ambient Focus Flow",
-    url: "https://www.soundjay.com/misc/sounds-1031.wav",
-    duration: 200
+    title: "Soft Ambient Flow",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    duration: 200,
   },
   {
     id: 3,
-    title: "Neural Enhancement Mix",
-    url: "https://www.soundjay.com/misc/sounds-1032.wav",
-    duration: 165
-  }
+    title: "Focus Session",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    duration: 160,
+  },
 ];
 
 export const MusicPlayer = () => {
