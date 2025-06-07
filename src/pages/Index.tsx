@@ -54,26 +54,25 @@ const Index = () => {
       <div className="relative z-10 container mx-auto p-8 max-w-7xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-12">
-          <div className="text-center flex-1">
-            <h1 className="text-5xl font-bold mb-4 neon-cyan font-mono">
-              <Terminal className="inline-block w-12 h-12 mr-4" />
-              NEURAL STUDY HUB
-            </h1>
-            <p className="text-neon-magenta font-mono text-xl">
-              &gt; Optimizing your academic performance through AI-driven insights
-            </p>
+          <div className="flex items-center gap-8">
+            {/* Music Player */}
+            <div className="w-80">
+              <MusicPlayer />
+            </div>
+            
+            {/* Title */}
+            <div className="text-center">
+              <h1 className="text-5xl font-bold mb-4 neon-cyan font-mono">
+                <Terminal className="inline-block w-12 h-12 mr-4" />
+                NEURAL STUDY HUB
+              </h1>
+              <p className="text-neon-magenta font-mono text-xl">
+                &gt; Optimizing your academic performance through AI-driven insights
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-6">
-            <Button 
-              onClick={toggleFullscreen}
-              variant="outline"
-              className="flex items-center gap-2 glow-green hover:glow-green font-mono border-neon-green text-neon-green hover:bg-neon-green hover:text-background transition-all hover-glow hover-glow-green"
-            >
-              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-              {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
-            </Button>
-            
             <div className="flex items-center gap-3 text-neon-cyan border border-neon-cyan/50 px-4 py-2 rounded-lg terminal-bg glow-cyan">
               <User className="w-5 h-5" />
               <span className="font-mono">{user?.email}</span>
@@ -255,8 +254,15 @@ const Index = () => {
         </Tabs>
       </div>
 
-      {/* Fixed Music Player - Top Right */}
-      <MusicPlayer />
+      {/* Fullscreen Button - Bottom Right */}
+      <Button 
+        onClick={toggleFullscreen}
+        variant="outline"
+        className="fixed bottom-6 right-6 flex items-center gap-2 glow-green hover:glow-green font-mono border-neon-green text-neon-green hover:bg-neon-green hover:text-background transition-all hover-glow hover-glow-green z-50"
+      >
+        {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+        {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
+      </Button>
     </div>
   );
 };
