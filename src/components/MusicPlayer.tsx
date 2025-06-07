@@ -9,19 +9,19 @@ const lofiTracks = [
   {
     id: 1,
     title: "Chill Beats Study Session",
-    url: "https://www.soundjay.com/misc/sounds-1030.wav", // placeholder
+    url: "https://www.soundjay.com/misc/sounds-1030.wav",
     duration: 180
   },
   {
     id: 2,
     title: "Ambient Focus Flow",
-    url: "https://www.soundjay.com/misc/sounds-1031.wav", // placeholder
+    url: "https://www.soundjay.com/misc/sounds-1031.wav",
     duration: 200
   },
   {
     id: 3,
     title: "Neural Enhancement Mix",
-    url: "https://www.soundjay.com/misc/sounds-1032.wav", // placeholder
+    url: "https://www.soundjay.com/misc/sounds-1032.wav",
     duration: 165
   }
 ];
@@ -31,6 +31,7 @@ export const MusicPlayer = () => {
   const [currentTrack, setCurrentTrack] = useState(0);
   const [volume, setVolume] = useState([75]);
   const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -38,44 +39,77 @@ export const MusicPlayer = () => {
     if (!audio) return;
 
     const updateTime = () => setCurrentTime(audio.currentTime);
-    audio.addEventListener('timeupdate', updateTime);
+    const updateDuration = () => setDuration(audio.duration || 0);
     
-    return () => audio.removeEventListener('timeupdate', updateTime);
-  }, []);
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('ended', nextTrack);
+    
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('ended', nextTrack);
+    };
+  }, [currentTrack]);
 
-  const togglePlay = () => {
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume[0] / 100;
+    }
+  }, [volume]);
+
+  const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play().catch(console.error);
+    try {
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        await audio.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsPlaying(false);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const nextTrack = () => {
     setCurrentTrack((prev) => (prev + 1) % lofiTracks.length);
     setCurrentTime(0);
+    if (isPlaying) {
+      setTimeout(() => {
+        audioRef.current?.play().catch(console.error);
+      }, 100);
+    }
   };
 
   const prevTrack = () => {
     setCurrentTrack((prev) => (prev - 1 + lofiTracks.length) % lofiTracks.length);
     setCurrentTime(0);
+    if (isPlaying) {
+      setTimeout(() => {
+        audioRef.current?.play().catch(console.error);
+      }, 100);
+    }
   };
 
   const handleVolumeChange = (value: number[]) => {
     setVolume(value);
-    if (audioRef.current) {
-      audioRef.current.volume = value[0] / 100;
-    }
   };
 
   const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getProgressPercentage = () => {
+    if (!duration || isNaN(duration) || duration === 0) return 0;
+    return (currentTime / duration) * 100;
   };
 
   return (
@@ -97,13 +131,13 @@ export const MusicPlayer = () => {
             <div 
               className="h-full bg-neon-magenta rounded transition-all duration-300"
               style={{ 
-                width: `${(currentTime / lofiTracks[currentTrack].duration) * 100}%` 
+                width: `${getProgressPercentage()}%` 
               }}
             />
           </div>
           <div className="flex justify-between text-xs font-mono neon-cyan">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(lofiTracks[currentTrack].duration)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -154,9 +188,7 @@ export const MusicPlayer = () => {
         <audio
           ref={audioRef}
           src={lofiTracks[currentTrack].url}
-          onEnded={nextTrack}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          preload="metadata"
         />
       </CardContent>
     </Card>

@@ -1,8 +1,7 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, BookOpen, MessageCircle, Target, Clock, LogOut, User, Terminal, Zap, Brain } from "lucide-react";
+import { Calendar, BookOpen, MessageCircle, Target, Clock, LogOut, User, Terminal, Zap, Brain, Timer } from "lucide-react";
 import { StudyTracker } from "@/components/StudyTracker";
 import { TimetableGenerator } from "@/components/TimetableGenerator";
 import { ChatInterface } from "@/components/ChatInterface";
@@ -69,13 +68,20 @@ const Index = () => {
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-10 terminal-bg border-neon-cyan/30 p-2">
+          <TabsList className="grid w-full grid-cols-5 mb-10 terminal-bg border-neon-cyan/30 p-2">
             <TabsTrigger 
               value="dashboard" 
               className="flex items-center gap-3 font-mono text-neon-cyan data-[state=active]:bg-neon-cyan data-[state=active]:text-background data-[state=active]:glow-cyan transition-all hover-glow"
             >
               <Target className="w-5 h-5" />
               DASHBOARD
+            </TabsTrigger>
+            <TabsTrigger 
+              value="timer" 
+              className="flex items-center gap-3 font-mono text-neon-green data-[state=active]:bg-neon-green data-[state=active]:text-background data-[state=active]:glow-green transition-all hover-glow"
+            >
+              <Timer className="w-5 h-5" />
+              TIMER
             </TabsTrigger>
             <TabsTrigger 
               value="timetable" 
@@ -93,7 +99,7 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger 
               value="chat" 
-              className="flex items-center gap-3 font-mono text-neon-green data-[state=active]:bg-neon-green data-[state=active]:text-background data-[state=active]:glow-green transition-all hover-glow"
+              className="flex items-center gap-3 font-mono text-neon-purple data-[state=active]:bg-neon-purple data-[state=active]:text-background data-[state=active]:glow-purple transition-all hover-glow"
             >
               <Brain className="w-5 h-5" />
               AI_TUTOR
@@ -182,6 +188,26 @@ const Index = () => {
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="timer" className="animate-fade-in">
+            <div className="space-y-8 terminal-bg cyber-grid p-6">
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl font-bold neon-green font-mono flex items-center justify-center gap-3">
+                  <Timer className="w-10 h-10" />
+                  NEURAL_TIMER_PROTOCOL
+                </h2>
+                <p className="text-neon-cyan font-mono text-lg">
+                  &gt; Track your study sessions with precision timing
+                </p>
+              </div>
+              
+              <div className="flex justify-center">
+                <div className="w-full max-w-2xl">
+                  <StudyTimer subjects={subjects} />
+                </div>
               </div>
             </div>
           </TabsContent>
