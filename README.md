@@ -14,10 +14,6 @@ Sched-U-Genius is an AI-based study planner that helps students manage their sub
 - OpenAI (Chatbot)
 - GitHub (Version control)
 
-## 📸 Screenshot
-![Dashboard](![image](https://github.com/user-attachments/assets/c0da4c65-bf5d-46a1-a268-ef22692e5610)
-)
-
 ## 🚀 Live Site
 [👉 Click to view deployed project](https://sched-u-genius-app.lovable.app/)
 
