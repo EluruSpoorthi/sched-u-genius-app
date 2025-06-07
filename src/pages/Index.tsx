@@ -1,22 +1,35 @@
+
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, BookOpen, MessageCircle, Target, Clock, LogOut, User, Terminal, Zap, Brain, Timer } from "lucide-react";
+import { Calendar, BookOpen, MessageCircle, Target, Clock, LogOut, User, Terminal, Zap, Brain, Timer, Maximize, Minimize } from "lucide-react";
 import { StudyTracker } from "@/components/StudyTracker";
 import { TimetableGenerator } from "@/components/TimetableGenerator";
 import { ChatInterface } from "@/components/ChatInterface";
 import { SubjectManager } from "@/components/SubjectManager";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { StudyTimer } from "@/components/StudyTimer";
+import { SystemActivityLog } from "@/components/SystemActivityLog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubjects } from "@/hooks/useSubjects";
 
 const Index = () => {
   const { user, signOut } = useAuth();
   const { subjects, setSubjects, loading } = useSubjects();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+    setIsFullscreen(!isFullscreen);
   };
 
   if (loading) {
@@ -31,7 +44,7 @@ const Index = () => {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background relative cyber-grid" style={{ backgroundColor: '#0d0d0d' }}>
@@ -52,6 +65,15 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-6">
+            <Button 
+              onClick={toggleFullscreen}
+              variant="outline"
+              className="flex items-center gap-2 glow-green hover:glow-green font-mono border-neon-green text-neon-green hover:bg-neon-green hover:text-background transition-all hover-glow hover-glow-green"
+            >
+              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+              {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
+            </Button>
+            
             <div className="flex items-center gap-3 text-neon-cyan border border-neon-cyan/50 px-4 py-2 rounded-lg terminal-bg glow-cyan">
               <User className="w-5 h-5" />
               <span className="font-mono">{user?.email}</span>
@@ -161,39 +183,13 @@ const Index = () => {
               
               <div className="space-y-6">
                 <StudyTimer subjects={subjects} />
-                
-                <Card className="terminal-bg glow-cyan scanlines hover-glow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3 neon-cyan font-mono text-xl">
-                      <Zap className="w-6 h-6" />
-                      SYSTEM_ACTIVITY_LOG
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6 font-mono">
-                    <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
-                      <span className="neon-green">[SUCCESS] Chemistry module completed</span>
-                      <span className="neon-blue text-sm">2h ago</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
-                      <span className="neon-magenta">[ALERT] Mathematics quiz scheduled</span>
-                      <span className="neon-blue text-sm">5h ago</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-b border-neon-cyan/20">
-                      <span className="neon-purple">[INFO] Physics session initiated</span>
-                      <span className="neon-blue text-sm">1d ago</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <span className="neon-cyan">[LOG] System optimization complete</span>
-                      <span className="neon-blue text-sm">2d ago</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <SystemActivityLog subjects={subjects} />
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="timer" className="animate-fade-in">
-            <div className="space-y-8 terminal-bg cyber-grid p-6">
+            <div className="space-y-8 terminal-bg cyber-grid p-6" style={{ backgroundColor: '#0d0d0d' }}>
               <div className="text-center space-y-4">
                 <h2 className="text-4xl font-bold neon-green font-mono flex items-center justify-center gap-3">
                   <Timer className="w-10 h-10" />
@@ -213,20 +209,53 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="timetable" className="animate-fade-in">
-            <TimetableGenerator subjects={subjects} />
+            <div className="space-y-8 terminal-bg cyber-grid p-6" style={{ backgroundColor: '#0d0d0d' }}>
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl font-bold neon-blue font-mono flex items-center justify-center gap-3">
+                  <Calendar className="w-10 h-10" />
+                  NEURAL_SCHEDULER_PROTOCOL
+                </h2>
+                <p className="text-neon-cyan font-mono text-lg">
+                  &gt; Optimize your study schedule with AI precision
+                </p>
+              </div>
+              <TimetableGenerator subjects={subjects} />
+            </div>
           </TabsContent>
 
           <TabsContent value="tracker" className="animate-fade-in">
-            <StudyTracker subjects={subjects} setSubjects={setSubjects} />
+            <div className="space-y-8 terminal-bg cyber-grid p-6" style={{ backgroundColor: '#0d0d0d' }}>
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl font-bold neon-magenta font-mono flex items-center justify-center gap-3">
+                  <BookOpen className="w-10 h-10" />
+                  NEURAL_PROGRESS_TRACKER
+                </h2>
+                <p className="text-neon-cyan font-mono text-lg">
+                  &gt; Monitor your academic advancement in real-time
+                </p>
+              </div>
+              <StudyTracker subjects={subjects} setSubjects={setSubjects} />
+            </div>
           </TabsContent>
 
           <TabsContent value="chat" className="animate-fade-in">
-            <ChatInterface />
+            <div className="space-y-8 terminal-bg cyber-grid p-6" style={{ backgroundColor: '#0d0d0d' }}>
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl font-bold neon-purple font-mono flex items-center justify-center gap-3">
+                  <Brain className="w-10 h-10" />
+                  NEURAL_AI_TUTOR_INTERFACE
+                </h2>
+                <p className="text-neon-cyan font-mono text-lg">
+                  &gt; Engage with advanced AI tutoring algorithms
+                </p>
+              </div>
+              <ChatInterface />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Fixed Music Player */}
+      {/* Fixed Music Player - Top Right */}
       <MusicPlayer />
     </div>
   );

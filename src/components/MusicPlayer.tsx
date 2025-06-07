@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,7 @@ export const MusicPlayer = () => {
   };
 
   return (
-    <Card className="fixed bottom-6 right-6 w-80 terminal-bg glow-magenta border-neon-magenta/50 z-50 animate-fade-in">
+    <Card className="fixed top-6 right-6 w-80 terminal-bg glow-magenta border-neon-magenta/50 z-50 animate-fade-in">
       <CardContent className="p-4 space-y-4">
         <div className="flex items-center gap-3">
           <Music className="w-5 h-5 neon-magenta" />
