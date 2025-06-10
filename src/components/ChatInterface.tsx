@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Bot, User, Brain, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -50,22 +51,20 @@ export const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat-with-ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      console.log('Sending message to AI:', inputMessage);
+      
+      const { data, error } = await supabase.functions.invoke('chat-with-ai', {
+        body: {
           message: inputMessage,
-          context: "You are an AI tutor specialized in helping students with their studies. Provide helpful, encouraging, and educational responses."
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Failed to get AI response: ${error.message}`);
       }
 
-      const data = await response.json();
+      console.log('AI response received:', data);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
